@@ -1,0 +1,197 @@
+[
+  {
+    "references": ["U1", "U54"],
+    "part": "7406",
+    "description": "Hex inverter, open collector"
+  },
+  {
+    "references": ["U2", "U25", "U71"],
+    "part": "74LS14",
+    "description": "Hex Schmitt inverter"
+  },
+  {
+    "references": ["U3", "U5"],
+    "part": "1489",
+    "description": "Quad Schmitt line driver"
+  },
+  {
+    "references": ["U4"],
+    "part": "1488",
+    "description": "Quad line driver"
+  },
+  {
+    "references": ["U6", "U13", "U14", "U55", "U58"],
+    "part": "74LS373",
+    "description": "Octal \"D\" latch"
+  },
+  {
+    "references": ["U7"],
+    "part": "74LS38",
+    "description": "Positive-NAND buffer"
+  },
+  {
+    "references": ["U8"],
+    "part": "74LS374",
+    "description": "Octal \"D\" flip-flop"
+  },
+  {
+    "references": ["U9"],
+    "part": "81-235",
+    "description": "Character PROM (2732)"
+  },
+  {
+    "references": ["U10"],
+    "part": "81-189",
+    "description": "Custom gate array"
+  },
+  {
+    "references": ["U11", "U17"],
+    "part": "Z80A SIO",
+    "description": "Z80A Serial Input/Output"
+  },
+  {
+    "references": ["U12"],
+    "part": "LM324",
+    "description": "Op-Amp"
+  },
+  {
+    "references": ["U15", "U23"],
+    "part": "6116",
+    "description": "Video RAM"
+  },
+  {
+    "references": ["U16"],
+    "part": "6545A",
+    "description": "Video controller"
+  },
+  {
+    "references": ["U18"],
+    "part": "TMS 99532",
+    "description": "Modem"
+  },
+  {
+    "references": ["U19"],
+    "part": "TMS 99531",
+    "description": "Dialer"
+  },
+  {
+    "references": ["U20", "U31"],
+    "part": "74LS245",
+    "description": "Octal bus transceiver (3-state outputs)"
+  },
+  {
+    "references": ["U21"],
+    "part": "4N35",
+    "description": "Photo isolator"
+  },
+  {
+    "references": ["U22"],
+    "part": "3.9K",
+    "description": "Pullup resistor, 14-pin DIP"
+  },
+  {
+    "references": ["U24"],
+    "part": "WD1943/8116",
+    "description": "Dual programmable baud rate generator"
+  },
+  {
+    "references": ["U26", "U27"],
+    "part": "74LS138",
+    "description": "3/8 MUX"
+  },
+  {
+    "references": ["U28", "U51"],
+    "part": "74LS244",
+    "description": "Octal buffer/line driver"
+  },
+  {
+    "references": ["U29"],
+    "part": "81-194",
+    "description": "Custom gate array"
+  },
+  {
+    "references": ["U32", "U33", "U38", "U39", "U41", "U42", "U47", "U48"],
+    "part": "2164",
+    "description": "64K x 1 RAM"
+  },
+  {
+    "references": ["U34"],
+    "part": "81-292",
+    "description": "Boot PROM (2764)"
+  },
+  {
+    "references": ["U35"],
+    "part": "Z80A PIO",
+    "description": "Z80A Parallel Input/Output"
+  },
+  {
+    "references": ["U36"],
+    "part": "MM581678",
+    "description": "Clock"
+  },
+  {
+    "references": ["U37", "U45", "U59", "U72"],
+    "part": "74LS02",
+    "description": "Quad NOR gate"
+  },
+  {
+    "references": ["U40"],
+    "part": "74LS00",
+    "description": "Quad NAND gate"
+  },
+  {
+    "references": ["U43"],
+    "part": "Z80A CPU",
+    "description": "Z80A Central Processing Unit"
+  },
+  {
+    "references": ["U44"],
+    "part": "1793",
+    "description": "Floppy disk controller"
+  },
+  {
+    "references": ["U46"],
+    "part": "74LS04",
+    "description": "Hex inverter"
+  },
+  {
+    "references": ["U52"],
+    "part": "74LS32",
+    "description": "Quad OR gate"
+  },
+  {
+    "references": ["U53", "U70", "U74", "U75"],
+    "part": null,
+    "description": "Spares"
+  },
+  {
+    "references": ["U60"],
+    "part": "74LS195",
+    "description": "4-bit shift register"
+  },
+  {
+    "references": ["U61"],
+    "part": "74LS08",
+    "description": "Quad AND gate"
+  },
+  {
+    "references": ["U65"],
+    "part": "74LS10",
+    "description": "Tri NAND gate"
+  },
+  {
+    "references": ["U66", "U75"],
+    "part": "74LS74",
+    "description": "Dual \"D\" flip-flop"
+  },
+  {
+    "references": ["U67"],
+    "part": "FDC9216",
+    "description": "Data separator"
+  },
+  {
+    "references": ["U73"],
+    "part": "74HC00",
+    "description": "Quad NAND gate"
+  }
+]

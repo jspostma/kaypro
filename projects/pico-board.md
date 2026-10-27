@@ -48,7 +48,9 @@ Decision recorded there: CPU-socket form factor rather than the expansion edge c
 
 ## Open questions
 - Reconcile A and B: one board or two?
-- CPU socket pinout; is /WAIT already used (FDC, CRT)?
+- ~~Is /WAIT already used?~~ **Yes**: video (VIDWAIT) and RTC drive it through a 7406
+  open-collector with a 750 Ω pull-up. The board must drive /WAIT open-collector too.
+- The J9 header lacks /INT, /BUSRQ, /MREQ and A8–A15, which confirms the CPU-socket form factor.
 - Pico (26 GPIO) vs Pico 2 (30 GPIO). The Pico's 26 GPIO run out fast with four interposers.
 - RAM disk addressing: I/O-mapped, bank-switched window, or DMA via /BUSRQ?
 - Which ROM video/keyboard routines a menu ROM can safely call from cold start.

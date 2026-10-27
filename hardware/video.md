@@ -1,17 +1,29 @@
 # Video
 
-## Signal chain
+## Signal chain (from the [schematic](schematic.md), sheet 2B)
 
 ```
-6116 char VRAM ─┐
-                ├─► char ROM (2732) ─► shift register ─► attribute logic ─► CRT
-6116 attr VRAM ─┘        ▲                                    ▲
-                     RA (scanline)                     attributes, CURSOR
-6545 CRTC ── MA, RA, HSYNC, VSYNC, DE, CURSOR, CCLK
+6545 U16 ── MA0–10 ──► U23 6116 char VRAM ─► U8 74LS374 ─► U9 2732 char ROM (A4–A10)
+         │                                            RA0–3 ─► U9 A0–A3
+         │                                    A12CH (sys port) ─► U9 A11 (char set)
+         └─ MA0–10 ──► U15 6116 attr VRAM ─► U20 74LS245 ─► U10 D0A–D3A (4 attr bits)
+U9 O0–O7 (glyph row) ─► U10 Q0D–Q7D ─► shift + attributes + CURSOR ─► VIDOUT, VIDHLF
+U10 81-189: 18.000 MHz crystal → dot clock, CCLK to the 6545
+CPU D0–7 ─► U14/U13 74LS373 latches ─► VRAM data side (no CPU address path to VRAM)
 ```
 
-Attributes (inverse, half-intensity, underline, blink) and the cursor are applied
-**after** the char ROM.
+- **The VRAMs are addressed only by the 6545's MA lines.** The CPU has no address path to
+  them. It reaches video RAM through the 6545 (update/transparent addressing) and the
+  U13/U14 data latches, under U10's control, with /WAIT (VIDWAIT) while it waits.
+  So `VRAM_BASE 0xF000` in `kaypro.h` (the memory-mapped '83 model) is wrong for this board.
+- **Attributes are 4 bits** (D0A–D3A into U10): reverse, half intensity, underline, blink
+  presumably; confirm the bit order from the ROM.
+- The char ROM's top address line comes from **A12CH**, a system-port bit, which selects
+  the alternate (Greek/graphics) character set half. Inferred from the net name.
+- Glyph rows go *into* U10, which does the shifting and attribute logic. U60 (74LS195) is
+  elsewhere.
+- Monitor: J1-3 VIDEO is 3-level (VIDOUT + VIDHLF summed through 150/300 Ω);
+  HSYNC J1-1 and VSYNC J1-4 are separate. All are 7406 open-collector.
 
 ## Measured timing (Kaypro 10, SY6545; from Kaypro10Video)
 
@@ -48,8 +60,8 @@ Check against the measurements: 21 kHz / 426 = **49.3 Hz**, which matches the me
 ~49 Hz. The table is right and the HSYNC measurement is right.
 
 Then **CCLK = 107 × 21 kHz ≈ 2.25 MHz**, not 1.286 MHz. Active video is 80 / 2.25 MHz ≈
-35.6 µs of a 47.6 µs line. At 8 px/char that implies an ~18 MHz dot clock (check the
-crystal on the video section). So the Kaypro10Video window constants (56 bytes, 43 µs)
+35.6 µs of a 47.6 µs line. At 8 px/char that implies an 18 MHz dot clock, and the
+schematic confirms it: **Y1 on U10 is 18.000 MHz**. So the Kaypro10Video window constants (56 bytes, 43 µs)
 are probably wrong for this board, or that firmware samples on a divided clock. The
 25th row's use is unconfirmed (`kaypro.h` assumes 24 for CP/M). **Confirm on the scope: CCLK ≈ 2.25 MHz, DE high ≈ 35.6 µs.**
 
@@ -86,11 +98,14 @@ character clock, it needs **no dot clock and has no pixel-phase problem**. The p
 exact by construction.
 
 ### Gaps for using it as a screen reader
-1. **No attributes, no cursor.** Add taps for attribute VRAM data out (8 lines) and CRTC
-   CURSOR (1 line). Without them, inverse-video menus (WordStar) and the cursor are invisible.
+1. **No attributes, no cursor.** Add taps for the 4 attribute lines (U15/U20 D0A–D3A,
+   or U10 pins 1, 37–39) and CRTC CURSOR (U16 pin 19 → U10 pin 36). Without them, inverse-video menus (WordStar) and the cursor are invisible.
 2. **The 56-byte window.** This machine needs 80 bytes per line at a ~2.25 MHz CCLK (see above).
 3. **The AND filter** kills blink and adds a frame of latency. Make it optional.
-4. **Check 4/84 parts and clearance:** char ROM type (2732 vs 2716), U-numbers, piggyback stack height.
+4. **4/84 parts:** char ROM is **U9, 81-235 (2732)**, CRTC is U16. Check piggyback stack height.
+5. **Simpler alternative tap point:** VIDOUT/VIDHLF at J1 plus HSYNC/VSYNC, sampled at
+   18 MHz (a PIO can do it), gives the composed image including attributes and cursor, but
+   needs dot-phase alignment, which the char-ROM tap avoids.
 
 ### Planned adaptation
 - Drop the Pi Zero/HDMI half. Have the Pico send frames over USB (CDC with RLE, or UVC so

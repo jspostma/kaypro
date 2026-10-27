@@ -8,9 +8,12 @@ whole phone company.
 
 ## What the modem needs from a "line"
 - **Loop current**, ~20–30 mA DC when off-hook. Without it most modems won't seize the line.
-- **Dial tone**, unless it can blind-dial. Check whether the Kaypro modem can be set to dial without waiting.
-- Something that hears its **dialing** (DTMF or pulse).
-- **Ringing** (~90 Vrms) only if the Kaypro answers. If it always originates, skip it.
+- **Dial tone**, unless it blind-dials. The TMS99531 dialer just sends digits when told;
+  whether it waits for dial tone is up to the comm software.
+- Something that hears its **dialing**: the TMS99531 does **DTMF or pulse** (TT/P select),
+  so decode both or configure tone.
+- **Ringing** (~90 Vrms) only if the Kaypro answers. Its modem can (DTR selects answer
+  mode; ring detect is a 4N35 opto feeding CTS), but if it always originates, skip it.
 
 ## Line side (talk battery)
 - 24 V supply → TIP and RING through **two current limiters**: an LM317 plus ≈62 Ω each

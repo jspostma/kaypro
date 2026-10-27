@@ -9,7 +9,8 @@ This GitHub repo (`jspostma/kaypro`) is canonical; it absorbed the old local
 | Need | Read |
 |---|---|
 | Overview and page list | `README.md` |
-| Hardware facts | `hardware/machine.md`, `hardware/video.md` |
+| Hardware facts | `hardware/machine.md`, `hardware/io-map.md` (authoritative ports), `hardware/video.md`, `hardware/keyboard.md` |
+| Schematic | `hardware/schematic.md` (sheet index, IC list); PDF itself is not in git |
 | What's unresolved | `open-questions.md` |
 | What's in the archive | `archive/master_contents.md`, then `archive/deep_investigation.md` |
 | ROM details | `hardware/rom-reference.md`, `hardware/rom-explainer/index.html` |
@@ -17,7 +18,7 @@ This GitHub repo (`jspostma/kaypro`) is canonical; it absorbed the old local
 ## Layout
 ```
 README.md  CLAUDE.md  open-questions.md  references.md
-hardware/   machine, video, rom-reference, rom-explainer/
+hardware/   machine, io-map, schematic(+/), video, keyboard(+/), rom-reference, rom-explainer/
 projects/   agent, phone-line-interface, pico-board(+/), npu-coprocessor,
             bios-c(+/ kaypro.h etc.), tech-manual(+/ notes, marker-output)
 tools/      emulation
@@ -46,9 +47,9 @@ Two trees on Jaapie's machine: [K] `kaypro/` (~444 MB) and [R] `kaypro_related/`
 - Terse responses; lead with the result.
 
 ## Known hazards
-- **The I/O port map in `projects/bios-c/kaypro.h` is disputed.** The ROM's own code and a
-  period doc put the SIO at 0x04–0x07. Don't generate code that touches ports directly
-  from `kaypro.h` until it's audited (`hardware/machine.md`, I/O map section).
+- **`projects/bios-c/kaypro.h` has the wrong port map** (SIO, baud generator, VRAM model).
+  Use `hardware/io-map.md`, which is decoded from the schematic, until `kaypro.h` is fixed.
+- Anything driving Z80 /WAIT must be open-collector (it's a shared node).
 - NMOS Z80 VOH ≈ 2.4 V: CPU-side logic must be 74HCT/LS/ACT, never plain 74HC.
 
 ## Constraints

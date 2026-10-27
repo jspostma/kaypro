@@ -2,7 +2,15 @@
 
 Status: **active**. Files: [`kaypro.h`](bios-c/kaypro.h), [`kaypro-h-reference.md`](bios-c/kaypro-h-reference.md), [`z80-c-toolchains.md`](bios-c/z80-c-toolchains.md).
 
-> **Warning:** the SIO/baud-generator port assignments in `kaypro.h` contradict the ROM's own code and a period document. See [machine § I/O map](../hardware/machine.md#io-map-disputed). Audit before touching hardware directly. The `VRAM_BASE 0xF000` memory-mapped model and `VRAM_ROWS 24` should be checked too: on the '84 board VRAM most likely sits behind the 6545 (transparent addressing via R18/R19 and the port 0x1F strobe) rather than in Z80 memory, and the ROM programs the CRTC for 25 displayed rows.
+> **`kaypro.h` is wrong for this board; don't use its port constants as-is.** The schematic
+> ([I/O map](../hardware/io-map.md)) shows:
+> - Keyboard is SIO1 ch B at **0x05/0x07**; RS-232 is SIO1 ch A at **0x04/0x06** (the header has 0x00–0x03).
+> - There is no 8253: baud rates go to a **COM8116** at **0x00** (fA) and **0x08** (fB) as 4-bit codes.
+> - A second SIO exists: printer 0x0C/0x0E, modem 0x0D/0x0F. PIO at 0x20–0x23, RTC at 0x24.
+> - VRAM isn't memory-mapped (`VRAM_BASE 0xF000` is the '83 model). The CPU reaches it
+>   through the 6545 and U10. The ROM programs 25 displayed rows, not 24.
+>
+> FDC (0x10–0x13), system port (0x14), parallel (0x18) and CRTC (0x1C–0x1F) match.
 
 Rewrite the Kaypro BIOS in C with **z88dk**:
 - `zcc +cpm -subtype=kaypro` for .COM programs.

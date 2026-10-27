@@ -26,12 +26,15 @@ agent tool**.
 ### Keyboard mux
 - A microcontroller (Pico) in series between the keyboard and the Kaypro, with a third,
   **galvanically isolated** serial port to the agent host (ADuM-type isolator or an isolated USB-UART).
-- The keyboard's 8048 sends **serial bytes**: ASCII for alphanumerics, raw codes (0xF1…)
-  for function and cursor keys that the ROM translates ([machine](../hardware/machine.md#keyboard)).
-  No make/break, so muxing is just **interleaving bytes**: no key state, no stuck
-  modifiers, no rollover. The agent side must emit the *raw* codes for special keys,
-  not ASCII. The archive's keyboard USB conversion project documents the protocol.
-- Two PIO UARTs (keyboard side, host side). Pass host→keyboard traffic (bell/click) through.
+- The keyboard ([details](../hardware/keyboard.md)) is **300 baud 8N1, 5 V TTL** on a
+  4-wire cable: +5 V, K2H (keyboard→host, open-collector, 3.3 kΩ pull-up), GND, H2K
+  (host→keyboard, beeper). It sends **ASCII** for main keys and fixed codes for keypad and
+  cursor keys (0xB1–0xF4). No make/break or modifier bytes, so muxing is just
+  **interleaving bytes**: no key state, no stuck modifiers, no rollover. The agent emits
+  the raw keypad/cursor codes, not ASCII escapes.
+- Insert the mux in the J2 cable. Two UARTs at 300 baud (keyboard side, host side). Pass
+  H2K (bell) through. 300 baud is ~30 chars/s, so the line is never the bottleneck.
+- The K2H pull-up is on the host side, so the mux's host-facing TX should be open-collector too.
 - **The human always wins:** any physical keystroke pauses the agent's queue for N seconds.
   Add an "agent typing" LED and a physical agent-enable switch that cuts injection in firmware.
 - **Pacing is the microcontroller's job.** The agent calls `type(string)` and firmware
@@ -69,8 +72,11 @@ The Gotek's I2C header is for its OLED, not control. Options:
 - Burn-in: an idle timeout makes the agent save state, then power-off. Turning brightness down is free.
 
 ### Modem
-This unit has an **internal modem** on SIO channel B; BIOS default is 300 baud, so assume Bell 103 FSK (originate 1070/1270 Hz, answer
-2025/2225 Hz). That survives G.711 VoIP fine, unlike V.32+. Options, best first:
+The internal modem is a **TMS99532** Bell 103 chip on SIO2 ch B (port 0x0D), with a
+**TMS99531** tone/pulse dialer on the PIO ([machine § modem](../hardware/machine.md#internal-modem)).
+Bell 103 FSK: originate 1070/1270 Hz, answer 2025/2225 Hz. DTR selects answer/originate,
+so the Kaypro can also **answer** calls, and ring detect is on CTS. The dialer does both
+DTMF and pulse, so the far end can decode either. That survives G.711 VoIP fine, unlike V.32+. Options, best first:
 1. **ATA (FXS) → own Asterisk → softmodem.** Third-party `app_softmodem` (Bell 103/V.21/V.23/V.22bis)
    answers and bridges to TCP. The ATA supplies dial tone, loop current and DTMF.
    No Digium cards, no Twilio. Force G.711 and turn off VAD, comfort noise and echo cancellation.

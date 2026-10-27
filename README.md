@@ -20,8 +20,11 @@ otherwise, everything is *idea* or *design only*.
 ## Pages
 
 ### Hardware
-- [The machine](hardware/machine.md): chips, ASICs, **disputed I/O map**, keyboard, modem, headers, electrical rules
-- [Video](hardware/video.md): CRTC programming, timing derivation, why CVBS won't work, digital capture
+- [The machine](hardware/machine.md): overview: chips, modem, RTC, headers, electrical rules
+- [Schematic](hardware/schematic.md): sheet index and IC list for board 81-184 rev B
+- [I/O map](hardware/io-map.md): every port, decoded from the schematic; J9 pinout
+- [Video](hardware/video.md): signal chain, CRTC programming, timing, capture options
+- [Keyboard](hardware/keyboard.md): protocol, codes, 8049 controller analysis
 - [ROM reference](hardware/rom-reference.md): 81-xxx version matrix, every ROM file in the archive
 - [ROM explainer](hardware/rom-explainer/index.html): annotated walkthrough of 81-292-A (HTML; open in a browser)
 

@@ -45,3 +45,16 @@ Biggest offenders: Virtual Kaypro disk images in four places, `KayproSchematic.p
 - `software/source/k10rom7a/`: full K10 ROM v7A source (1983).
 - Site mirrors: kayprojournal.com (clean HTML), retrocmp.de Kaypro reference.
 - Chilton's *Guide to Kaypro Repair and Maintenance* (`kaypro150dpigrayscale.pdf`).
+
+## Other local material (not in git)
+Imported as text into this repo on 2026-10-27; the binaries stay in Jaapie's folders:
+
+| Folder | Binaries kept out | Text imported to |
+|---|---|---|
+| `kaypro_schematic/` | `kp4_schematic.pdf` (NLS 81-185, 8 pp), `kaypro4_ics.ods`, three Inkscape SVGs (raster page 1 plus a few rects) | [hardware/schematic/](../hardware/schematic.md) |
+| `kaypro_keyboard/` | `KAYPRO-10_M5L8049.BIN` (2 KB), `KAYPRO-II_INS8048.BIN` (1 KB), `keyboard.jpg` | [hardware/keyboard/](../hardware/keyboard.md) |
+| `kaypro_serial/Kaypro/` | keyboard photos, interface schematic JPG, datasheets (MC75451, M5L8049, SN7406) | [hardware/keyboard/protocol.md](../hardware/keyboard/protocol.md) |
+| `kaypro_esp/` | venv, PyCharm config | nothing (`main.py` is a hello-world stub for the ESP8266 modem idea) |
+
+The keyboard USB conversion material is the same third-party project that
+`master_contents.md` lists under section 12 (`web/`).
