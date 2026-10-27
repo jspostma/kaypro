@@ -27,8 +27,9 @@ relevant page when resolved.
   "expansion bus" means. Settle and fix the wording in [machine](hardware/machine.md).
 
 ## Meta
-- **Relationship to `kaypro_stuff`.** That repo already holds the research notes and
-  archive indexes. Decide whether this repo is (a) the design/decision wiki that links
-  into `kaypro_stuff`, or (b) a replacement that absorbs its notes. Either works; having
-  two partially overlapping homes is the failure mode.
+- **Migrate `kaypro_stuff` notes into this repo.** Decided 2026-10-27: this GitHub repo is
+  canonical. `kaypro_stuff` exists only as a local checkout (`~/projects/kayprostuff`),
+  never pushed. Bring its Markdown notes, `kaypro.h`, the ROM explainer and reference, and
+  the tech-manual scripts here. Keep archive binaries out of git (existing decision).
+- The vault note `kaypro-research` lists a Gitea URL that was never created. Fix it to point here.
 - Edge connector part number for the video board (asked once, unresolved).

@@ -8,19 +8,18 @@ everything here is *idea* or *design only*. Nothing is built unless a page says 
 
 ## Where things live (read this first)
 
-This repo is not the only Kaypro source. Before adding anything, check whether it
-belongs in one of these instead:
+**This repo is canonical** for Kaypro notes until the homelab git setup is sorted.
+Other Kaypro material exists in these places:
 
 | What | Where | Holds |
 |---|---|---|
 | **This repo** (`jspostma/kaypro`) | GitHub | Wiki pages: hardware facts, project designs, decisions, open questions |
-| **`kaypro_stuff`** | `https://git.timegoat.org/jaapie/kaypro_stuff.git` (branch `master`), checkout `~/projects/kayprostuff` | Research notes, tooling, archive indexes (`README.md` → `master_contents.md` → `deep_investigation.md`), `kaypro.h`, ROM explainer, ROM reference, tech-manual work |
+| **`kaypro_stuff`** | **Local only:** `~/projects/kayprostuff` on mrfreeze (never pushed; the Gitea URL in the vault note doesn't exist yet) | Research notes, tooling, archive indexes (`README.md` → `master_contents.md` → `deep_investigation.md`), `kaypro.h`, ROM explainer, ROM reference, tech-manual work |
 | **Archive** (not in git) | `/mnt/backup/intel/…/Kaypro Info` (~444 MB), `/mnt/backup/kaypro_related/` (~3.1 GB) | Manuals, schematics, datasheets, ROM dumps, disk images, emulators, site mirrors |
 | **Vault notes** | `jspostma/vault`: `kaypro-4`, `kaypro-research`, `kaypro-pico-board`, `kaypro-bios-c`, `kaypro-tech-manual` | Short summaries pointing at `kaypro_stuff` |
 
-> Open decision: is this repo the wiki *for* `kaypro_stuff` (design and decision pages
-> only, linking out for detail), or does it replace `kaypro_stuff`'s notes? See
-> [open questions](open-questions.md#meta).
+> `kaypro_stuff`'s notes (not the archive binaries) should migrate here so there's one
+> canonical copy. See [open questions](open-questions.md#meta).
 
 ## Pages
 
