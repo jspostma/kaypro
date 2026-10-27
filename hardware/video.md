@@ -21,11 +21,41 @@ Attributes (inverse, half-intensity, underline, blink) and the cursor are applie
 | HSYNC | ~21 kHz | high = 3 µs blanking, low = 43 µs active |
 | VSYNC | ~49 Hz | active low |
 | DE | | active high during active video |
-| Lines | 400 active | 25 rows × 16 scanlines |
+| Lines | 400 active | 25 rows × 16 scanlines (confirmed by the ROM's CRTC table below) |
 
-**Doesn't add up:** 1.286 MHz × 43 µs ≈ 55 characters, but 80 columns needs 80.
-Either CCLK is closer to 1.86 MHz or that firmware captures a truncated window
-(it uses 56 bytes per line). **Scope CCLK and DE width on this machine.**
+**Their CCLK figure doesn't add up:** 1.286 MHz × 43 µs ≈ 55 characters, but 80
+columns needs 80. That firmware also captures only 56 bytes per line.
+
+## What the 292 ROM programs into the 6545
+
+From the CRTC init table at 0x76D in 81-292-A (via the [ROM explainer](rom-explainer/index.html)):
+
+| Reg | Value | Meaning |
+|---|---|---|
+| R0 | 0x6A | 107 character clocks per line |
+| R1 | 0x50 | 80 displayed |
+| R2 | 0x56 | HSYNC at char 86 |
+| R3 | 0x99 | sync widths |
+| R4 | 0x19 | 26 character rows total |
+| R5 | 0x0A | +10 scanlines adjust |
+| R6 | 0x19 | **25 rows displayed** |
+| R7 | 0x19 | VSYNC at row 25 |
+| R9 | 0x0F | **16 scanlines per row** |
+
+So lines per frame = 26 × 16 + 10 = **426**, of which 400 are visible.
+
+Check against the measurements: 21 kHz / 426 = **49.3 Hz**, which matches the measured
+~49 Hz. The table is right and the HSYNC measurement is right.
+
+Then **CCLK = 107 × 21 kHz ≈ 2.25 MHz**, not 1.286 MHz. Active video is 80 / 2.25 MHz ≈
+35.6 µs of a 47.6 µs line. At 8 px/char that implies an ~18 MHz dot clock (check the
+crystal on the video section). So the Kaypro10Video window constants (56 bytes, 43 µs)
+are probably wrong for this board, or that firmware samples on a divided clock. The
+25th row's use is unconfirmed (`kaypro.h` assumes 24 for CP/M). **Confirm on the scope: CCLK ≈ 2.25 MHz, DE high ≈ 35.6 µs.**
+
+The ROM explainer's "K10" CRTC values (R9 = 0x07, 8 scanlines; R0 = 0x78; R4 = 0x1F)
+give ~15.7 kHz NTSC-like timing. They come from the 1983 K10 ROM v7A source, i.e. the
+pre-universal-board K10, and don't apply to this machine.
 
 ## Composite (CVBS) output: don't
 
@@ -58,7 +88,7 @@ exact by construction.
 ### Gaps for using it as a screen reader
 1. **No attributes, no cursor.** Add taps for attribute VRAM data out (8 lines) and CRTC
    CURSOR (1 line). Without them, inverse-video menus (WordStar) and the cursor are invisible.
-2. **The 56-byte window** (see above).
+2. **The 56-byte window.** This machine needs 80 bytes per line at a ~2.25 MHz CCLK (see above).
 3. **The AND filter** kills blink and adds a frame of latency. Make it optional.
 4. **Check 4/84 parts and clearance:** char ROM type (2732 vs 2716), U-numbers, piggyback stack height.
 

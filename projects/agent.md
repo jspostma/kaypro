@@ -26,8 +26,11 @@ agent tool**.
 ### Keyboard mux
 - A microcontroller (Pico) in series between the keyboard and the Kaypro, with a third,
   **galvanically isolated** serial port to the agent host (ADuM-type isolator or an isolated USB-UART).
-- If the keyboard sends ASCII rather than scancodes (verify, see [machine](../hardware/machine.md#keyboard)),
-  muxing is just **interleaving bytes**. There's no key state, no stuck modifiers, no rollover.
+- The keyboard's 8048 sends **serial bytes**: ASCII for alphanumerics, raw codes (0xF1…)
+  for function and cursor keys that the ROM translates ([machine](../hardware/machine.md#keyboard)).
+  No make/break, so muxing is just **interleaving bytes**: no key state, no stuck
+  modifiers, no rollover. The agent side must emit the *raw* codes for special keys,
+  not ASCII. The archive's keyboard USB conversion project documents the protocol.
 - Two PIO UARTs (keyboard side, host side). Pass host→keyboard traffic (bell/click) through.
 - **The human always wins:** any physical keystroke pauses the agent's queue for N seconds.
   Add an "agent typing" LED and a physical agent-enable switch that cuts injection in firmware.
@@ -36,9 +39,9 @@ agent tool**.
 
 ### Screen
 - **Agent's eyes: a webcam** on the CRT.
-  - Rectify (homography from the screen corners), sample the 80×24 grid, template-match
+  - Rectify (homography from the screen corners), sample the 80×25 grid (the CRTC displays 25 rows; what the 25th holds is unconfirmed), template-match
     against glyphs from the dumped char ROM.
-  - Lock exposure to a multiple of the frame period (at ~49 Hz, about 20.4 ms) to avoid
+  - Lock exposure to a multiple of the frame period (at ~49.3 Hz, about 20.3 ms) to avoid
     roll banding. Lock focus, gain and white balance.
   - Long-persistence phosphor ghosts on scroll, so use a settle detector (frame diff below
     a threshold for ~200 ms) before decoding.
@@ -66,7 +69,7 @@ The Gotek's I2C header is for its OLED, not control. Options:
 - Burn-in: an idle timeout makes the agent save state, then power-off. Turning brightness down is free.
 
 ### Modem
-Kaypro modem assumed to be 300 baud Bell 103 FSK (originate 1070/1270 Hz, answer
+This unit has an **internal modem** on SIO channel B; BIOS default is 300 baud, so assume Bell 103 FSK (originate 1070/1270 Hz, answer
 2025/2225 Hz). That survives G.711 VoIP fine, unlike V.32+. Options, best first:
 1. **ATA (FXS) → own Asterisk → softmodem.** Third-party `app_softmodem` (Bell 103/V.21/V.23/V.22bis)
    answers and bridges to TCP. The ATA supplies dial tone, loop current and DTMF.
@@ -103,5 +106,4 @@ Steps 2–5 could share hardware with the [Pico board](pico-board.md).
 
 ## Open questions
 - What is it actually *for*? Writing programs (MBASIC, Turbo Pascal), BBS-ing, or a character that lives in the machine?
-- Internal modem or external on the serial port?
-- Keyboard protocol and baud rate.
+- Keyboard baud rate (read the archive's keyboard USB project notes; otherwise scope it).

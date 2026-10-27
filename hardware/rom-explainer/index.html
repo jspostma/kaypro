@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kaypro ROM Explainer</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --panel: #16213e;
+    --panel2: #0f3460;
+    --accent: #e94560;
+    --accent2: #53d8fb;
+    --text: #e0e0e0;
+    --muted: #888;
+    --code-bg: #0d0d1a;
+    --code-border: #2a2a4a;
+    --green: #4ec94e;
+    --yellow: #f5d042;
+    --orange: #f59542;
+    --purple: #b08aff;
+    --teal: #42d4c8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif;
+         font-size: 15px; line-height: 1.6; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Layout */
+  #sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+             background: var(--panel); overflow-y: auto; padding: 1rem 0;
+             border-right: 1px solid var(--code-border); z-index: 100; }
+  #content { margin-left: 240px; max-width: 900px; padding: 2rem 3rem 4rem 3rem; }
+
+  /* Sidebar nav */
+  #sidebar h2 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;
+                color: var(--muted); padding: 0.5rem 1rem; margin-top: 0.5rem; }
+  #sidebar ul { list-style: none; }
+  #sidebar ul li a { display: block; padding: 0.3rem 1rem 0.3rem 1.5rem;
+                     color: var(--text); font-size: 0.85rem; transition: background 0.1s; }
+  #sidebar ul li a:hover { background: var(--panel2); color: var(--accent2); text-decoration: none; }
+  #sidebar ul li a.sub { padding-left: 2.2rem; color: var(--muted); font-size: 0.8rem; }
+  #sidebar ul li a.sub:hover { color: var(--text); }
+
+  /* Sections */
+  section { margin-bottom: 3rem; border-top: 1px solid var(--code-border); padding-top: 2rem; }
+  section:first-child { border-top: none; padding-top: 0; }
+  h1 { font-size: 1.8rem; color: var(--accent2); margin-bottom: 0.3rem; }
+  h2 { font-size: 1.4rem; color: var(--accent2); margin: 1.5rem 0 0.7rem; }
+  h3 { font-size: 1.1rem; color: var(--yellow); margin: 1.2rem 0 0.5rem; }
+  h4 { font-size: 0.95rem; color: var(--orange); margin: 1rem 0 0.4rem; }
+  p { margin-bottom: 0.8rem; }
+  ul, ol { margin: 0.5rem 0 0.8rem 1.5rem; }
+  li { margin-bottom: 0.2rem; }
+
+  /* Callout boxes */
+  .callout { border-left: 3px solid var(--accent2); background: var(--panel);
+             padding: 0.8rem 1rem; margin: 1rem 0; border-radius: 0 4px 4px 0; }
+  .callout.analogy { border-color: var(--green); }
+  .callout.warning { border-color: var(--accent); }
+  .callout.diff { border-color: var(--purple); }
+  .callout-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+                   font-weight: 700; margin-bottom: 0.4rem; color: var(--accent2); }
+  .callout.analogy .callout-title { color: var(--green); }
+  .callout.warning .callout-title { color: var(--accent); }
+  .callout.diff .callout-title { color: var(--purple); }
+
+  /* Code blocks */
+  pre { background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 4px;
+        padding: 1rem; overflow-x: auto; margin: 0.8rem 0; font-size: 0.82rem;
+        font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; line-height: 1.5; }
+  code { background: var(--code-bg); padding: 0.1em 0.3em; border-radius: 3px;
+         font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: 0.85em;
+         color: var(--accent2); }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+
+  /* Assembly syntax */
+  .asm-addr { color: var(--muted); }
+  .asm-op { color: var(--yellow); }
+  .asm-reg { color: var(--teal); }
+  .asm-num { color: var(--orange); }
+  .asm-label { color: var(--green); font-weight: bold; }
+  .asm-comment { color: #555; font-style: italic; }
+  .asm-str { color: #b5cea8; }
+  .asm-io { color: var(--accent); }
+
+  /* Tables */
+  table { border-collapse: collapse; width: 100%; margin: 0.8rem 0; font-size: 0.85rem; }
+  th { background: var(--panel2); color: var(--accent2); padding: 0.5rem 0.7rem;
+       text-align: left; font-weight: 600; border: 1px solid var(--code-border); }
+  td { padding: 0.4rem 0.7rem; border: 1px solid var(--code-border); vertical-align: top; }
+  tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+  .mono { font-family: monospace; font-size: 0.9em; color: var(--accent2); }
+
+  /* Memory map visual */
+  .memmap { display: flex; gap: 1rem; margin: 1rem 0; align-items: flex-start; flex-wrap: wrap; }
+  .memmap-col { flex: 1; min-width: 200px; }
+  .memmap-title { font-size: 0.75rem; text-transform: uppercase; color: var(--muted);
+                  margin-bottom: 0.5rem; letter-spacing: 0.05em; }
+  .mem-block { padding: 0.4rem 0.6rem; border: 1px solid; font-size: 0.8rem;
+               display: flex; justify-content: space-between; align-items: center; }
+  .mem-block .addr { color: var(--muted); font-family: monospace; font-size: 0.75rem; }
+  .mb-rom  { background: rgba(83,216,251,0.08); border-color: var(--accent2); color: var(--accent2); }
+  .mb-sys  { background: rgba(229,69,96,0.1);  border-color: var(--accent);  color: var(--accent); }
+  .mb-bios { background: rgba(176,138,255,0.1); border-color: var(--purple); color: var(--purple); }
+  .mb-bdos { background: rgba(245,208,66,0.1);  border-color: var(--yellow); color: var(--yellow); }
+  .mb-ccp  { background: rgba(78,201,78,0.1);   border-color: var(--green);  color: var(--green); }
+  .mb-tpa  { background: rgba(255,255,255,0.03); border-color: #444; color: var(--text); }
+  .mb-scratch { background: rgba(245,149,66,0.1); border-color: var(--orange); color: var(--orange); }
+  .mb-free { background: rgba(255,255,255,0.02); border-color: #333; color: #555; }
+
+  /* Jump table */
+  .jt-row td:first-child { color: var(--muted); font-family: monospace; }
+  .jt-row td:nth-child(2) { color: var(--green); font-family: monospace; font-weight: bold; }
+  .jt-row td:nth-child(3) { color: var(--yellow); font-family: monospace; }
+
+  /* Collapsible */
+  details { margin: 0.8rem 0; border: 1px solid var(--code-border); border-radius: 4px; }
+  summary { padding: 0.6rem 1rem; cursor: pointer; background: var(--panel);
+            font-weight: 600; color: var(--accent2); list-style: none; user-select: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: '▶ '; font-size: 0.7rem; }
+  details[open] summary::before { content: '▼ '; }
+  details[open] summary { border-bottom: 1px solid var(--code-border); }
+  .details-body { padding: 1rem; }
+
+  /* Diff badge */
+  .badge { display: inline-block; padding: 0.1em 0.5em; border-radius: 3px;
+           font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+           letter-spacing: 0.05em; margin-left: 0.5rem; vertical-align: middle; }
+  .badge-292 { background: rgba(176,138,255,0.2); color: var(--purple); border: 1px solid var(--purple); }
+  .badge-k10 { background: rgba(83,216,251,0.1); color: var(--accent2); border: 1px solid var(--accent2); }
+
+  @media (max-width: 700px) {
+    #sidebar { display: none; }
+    #content { margin-left: 0; padding: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <h2>Navigation</h2>
+  <ul>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#architecture">CP/M Architecture</a></li>
+    <li><a href="#memmap">Memory Map</a></li>
+    <li><a href="#jumptable">The Jump Table</a></li>
+    <li><a href="#boot">Boot Sequence</a></li>
+    <li><a href="#devinit">Device Init (Serial)</a></li>
+    <li><a href="#video">Video</a></li>
+    <li><a href="#disk">Disk I/O</a></li>
+    <li><a href="#dpt">Disk Parameter Tables</a></li>
+    <li><a href="#keyboard">Keyboard</a></li>
+    <li><a href="#scratchram">Scratch RAM</a></li>
+    <li><a href="#292diff">292-A vs K10 Differences</a></li>
+    <li><a href="#iomap">Full I/O Port Map</a></li>
+  </ul>
+</nav>
+
+<div id="content">
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="overview">
+<h1>Kaypro ROM — Code Explainer</h1>
+<p>This guide walks through the ROM source code for the Kaypro 2/4 (specifically the <strong>81-292</strong> family, the ROM in your Kaypro 4), explaining what each part does and why. It's written for someone comfortable with Python and Arduino-level C, with minimal assembly experience.</p>
+
+<p>The primary source used is <code>kaypro/software/roms/boot/81-292/kp81_292.mac</code> — a 2006 reverse-engineering of the 81-292 EPROM. Where the raw disassembly is hard to follow, we cross-reference <code>k10rom7a/ROM7A.MAC</code> (the Kaypro 10 ROM with developer comments) and the <strong>CP/M 2.0 Alteration Guide</strong>. Differences specific to the 292-A are called out with <span class="badge badge-292">292-A</span> tags.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="architecture">
+<h2>CP/M Architecture</h2>
+
+<p>CP/M is structured as three layers. The ROM implements the bottom layer:</p>
+
+<div class="callout analogy">
+  <div class="callout-title">Arduino analogy</div>
+  Think of it like the Arduino library ecosystem: <code>CCP</code> = your sketch (user-facing), <code>BDOS</code> = the Arduino standard library (file I/O abstraction), <code>BIOS</code> = the low-level HAL that talks directly to hardware. The ROM contains the BIOS plus the boot loader that loads CCP+BDOS from disk.
+</div>
+
+<table>
+  <tr><th>Layer</th><th>Name</th><th>What it does</th><th>Where it lives</th></tr>
+  <tr><td>Top</td><td><strong>CCP</strong> — Console Command Processor</td><td>The shell. Parses commands like <code>DIR</code>, <code>TYPE</code>, runs programs.</td><td>Loaded from disk into RAM (~0xE400)</td></tr>
+  <tr><td>Middle</td><td><strong>BDOS</strong> — Basic Disk Operating System</td><td>File system. Programs call BDOS to open files, read sectors, etc. It's hardware-independent.</td><td>Loaded from disk into RAM (~0xEC06)</td></tr>
+  <tr><td>Bottom</td><td><strong>BIOS</strong> — Basic I/O System</td><td>Hardware drivers. BDOS calls BIOS for disk, keyboard, serial, video. Hardware-specific — this is what the ROM provides.</td><td>Loaded from disk sector 0 into RAM (~0xFA00), or provided by ROM on first boot.</td></tr>
+  <tr><td>—</td><td><strong>Cold-start loader</strong> (in ROM)</td><td>Reads the OS (CCP+BDOS+BIOS) from track 0 of the disk and copies it to RAM.</td><td>In the 8KB EPROM at address 0x0000</td></tr>
+</table>
+
+<p>The ROM (EPROM, part 81-292 or 81-292-A) handles everything until CP/M is running. After that, the ROM is no longer directly called — control stays in RAM. The BIOS jump table in RAM is what CP/M actually uses.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="memmap">
+<h2>Memory Map</h2>
+
+<p>The Z80 has a 16-bit address bus = 64 KB of address space. Here's how it's used in two different moments:</p>
+
+<div class="memmap">
+  <div class="memmap-col">
+    <div class="memmap-title">At power-on (ROM mapped)</div>
+    <div class="mem-block mb-rom"><span>ROM (8KB) — cold-start loader + BIOS stubs</span><span class="addr">0x0000</span></div>
+    <div class="mem-block mb-free"><span>Unmapped / unused RAM</span><span class="addr">0x2000</span></div>
+    <div class="mem-block mb-free" style="height:80px;"></div>
+    <div class="mem-block mb-free"><span>RAM (rest of 64KB)</span><span class="addr">0xFFFF</span></div>
+  </div>
+  <div class="memmap-col">
+    <div class="memmap-title">While CP/M is running (ROM switched out)</div>
+    <div class="mem-block mb-sys"><span>CP/M page zero — system vars, jump vectors</span><span class="addr">0x0000–0x00FF</span></div>
+    <div class="mem-block mb-tpa" style="height:120px;"><span>TPA — Transient Program Area (where programs run)</span><span class="addr">0x0100</span></div>
+    <div class="mem-block mb-ccp"><span>CCP</span><span class="addr">~0xE400</span></div>
+    <div class="mem-block mb-bdos"><span>BDOS</span><span class="addr">~0xEC06</span></div>
+    <div class="mem-block mb-bios"><span>BIOS (loaded from disk)</span><span class="addr">~0xFA00</span></div>
+    <div class="mem-block mb-scratch"><span>Scratch RAM (disk buffers, ROM vars)</span><span class="addr">~0xFB00–0xFFFF</span></div>
+  </div>
+</div>
+
+<h3>The ROM bank switch</h3>
+<p>On power-up, the ROM appears at 0x0000 because the Z80 always starts executing at address 0. But CP/M needs address 0 to be RAM (it stores jump vectors there). The Kaypro solves this by having the ROM copy the BIOS to RAM, then "switch itself out" — a control bit in the hardware makes RAM appear at 0x0000 instead of the ROM. After that point, the ROM chip is invisible to the CPU.</p>
+
+<div class="callout analogy">
+  <div class="callout-title">Analogy</div>
+  It's like an Arduino sketch that bootstraps a second, more capable sketch from an SD card and then hands over control. The ROM's only real job is "load CP/M from disk and get out of the way."
+</div>
+
+<h3>Scratch RAM variables</h3>
+<p>The ROM uses a block of fixed RAM addresses at the top of memory to store its working variables — things like "which disk is selected," "what's the current cursor position," "which baud rate are we running." In the 292 ROM, this area starts around <code>0xFB00</code> and another chunk at <code>0xFD00</code>. These must survive across calls (the ROM has no stack-allocated globals like a C program would). Think of them as the Z80 ROM's equivalent of global variables.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="jumptable">
+<h2>The Jump Table — the BIOS API</h2>
+
+<p>Right at address 0x0000, before the reset vector, the ROM contains a jump table: a list of <code>JP</code> instructions. Each <code>JP</code> is 3 bytes (opcode + 16-bit target address), so the table entries are at fixed, well-known addresses.</p>
+
+<div class="callout analogy">
+  <div class="callout-title">C++ / Python analogy</div>
+  The jump table is exactly like a vtable (C++ virtual methods) or a dict of function pointers. CP/M's BDOS doesn't know (or care) what hardware it's running on — it just calls a fixed address like <code>CALL 0x0012</code> and the ROM routes that to the correct driver. In Python terms: it's a dispatch table, <code>bios = {"seldsk": fn_seldsk, "read": fn_read, ...}</code>.
+</div>
+
+<p>The 292 ROM jump table at address 0x0000 (each <code>JP</code> is 3 bytes → entries at 0, 3, 6, 9, ...):</p>
+
+<table>
+  <tr><th>Addr</th><th>Label</th><th>Target</th><th>What it does</th></tr>
+  <tr class="jt-row"><td>0x0000</td><td>BOOT (cold start)</td><td>0x004B</td><td>Full cold-start: init hardware, load OS from disk</td></tr>
+  <tr class="jt-row"><td>0x0003</td><td>diskinit</td><td>0x0244</td><td>Initialise the floppy disk controller</td></tr>
+  <tr class="jt-row"><td>0x0006</td><td>vidinit</td><td>0x06DA</td><td>Initialise the video (CRTC chip, screen clear)</td></tr>
+  <tr class="jt-row"><td>0x0009</td><td>devinit</td><td>0x013C</td><td>Initialise serial devices (Z80 SIO, baud rate gen)</td></tr>
+  <tr class="jt-row"><td>0x000C</td><td>HOME</td><td>0x0296</td><td>Seek disk to track 0</td></tr>
+  <tr class="jt-row"><td>0x000F</td><td>SELDSK</td><td>0x0272</td><td>Select disk drive (A=0, B=1). Returns pointer to Disk Parameter Header.</td></tr>
+  <tr class="jt-row"><td>0x0012</td><td>SETTRK</td><td>0x028A</td><td>Set the track number for next read/write</td></tr>
+  <tr class="jt-row"><td>0x0015</td><td>SETSEC</td><td>0x0279</td><td>Set the sector number for next read/write</td></tr>
+  <tr class="jt-row"><td>0x0018</td><td>SETDMA</td><td>0x0285</td><td>Set the DMA address — where in RAM to put the sector data</td></tr>
+  <tr class="jt-row"><td>0x001B</td><td>READ</td><td>0x02AA</td><td>Read one 128-byte sector from disk into RAM at DMA address</td></tr>
+  <tr class="jt-row"><td>0x001E</td><td>WRITE</td><td>0x02C5</td><td>Write one 128-byte sector from RAM to disk</td></tr>
+  <tr class="jt-row"><td>0x0021</td><td>SECTRAN</td><td>0x0536</td><td>Translate logical sector number to physical (skew compensation)</td></tr>
+  <tr class="jt-row"><td>0x0024</td><td>diskon</td><td>0x0563</td><td>Motor on / select drive</td></tr>
+  <tr class="jt-row"><td>0x0027</td><td>diskoff</td><td>0x0572</td><td>Motor off / deselect drive</td></tr>
+  <tr class="jt-row"><td>0x002A</td><td>kbdstat</td><td>0x014F</td><td>Keyboard status — is a key waiting? (CONST in CP/M terms)</td></tr>
+  <tr class="jt-row"><td>0x002D</td><td>kbdin</td><td>0x0159</td><td>Read one keypress (CONIN)</td></tr>
+  <tr class="jt-row"><td>0x0030</td><td>kbdout</td><td>0x0164</td><td>Output one character to console (CONOUT)</td></tr>
+  <tr class="jt-row"><td>0x0033</td><td>siosti</td><td>0x01A8</td><td>Serial (SIO) transmit status — ready to send?</td></tr>
+  <tr class="jt-row"><td>0x0036</td><td>sioin</td><td>0x01AE</td><td>Read byte from serial port (SIO)</td></tr>
+  <tr class="jt-row"><td>0x0039</td><td>sioout</td><td>0x01B6</td><td>Write byte to serial port</td></tr>
+  <tr class="jt-row"><td>0x003C</td><td>listst</td><td>0x01C6</td><td>List device (printer) status</td></tr>
+  <tr class="jt-row"><td>0x003F</td><td>list (LISTOUT)</td><td>0x01D0</td><td>Send byte to printer</td></tr>
+  <tr class="jt-row"><td>0x0042</td><td>sersto</td><td>0x01C0</td><td>Serial store — output to second serial port</td></tr>
+  <tr class="jt-row"><td>0x0045</td><td>vidout</td><td>0x077D</td><td>Output one character to video (interprets escape sequences)</td></tr>
+  <tr class="jt-row"><td>0x0048</td><td>delay</td><td>0x0579</td><td>Software delay loop (busy-wait)</td></tr>
+</table>
+
+<p>Notice that <strong>this jump table is in ROM</strong> at power-on, but after CP/M loads, it builds a <em>new</em> jump table in RAM at 0x0000 that points to the BIOS routines it loaded from disk. The ROM table is only used during the boot process itself.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="boot">
+<h2>Boot Sequence — Step by Step</h2>
+
+<p>The Z80 resets to address 0x0000. Execution begins at the first instruction after the jump table (at address 0x004B in the 292 ROM):</p>
+
+<pre><code><span class="asm-comment">; cold start entry point — arrives here from JP at 0x0000</span>
+<span class="asm-label">BOOT:</span>
+    <span class="asm-op">DI</span>                  <span class="asm-comment">; Disable interrupts — we're not using them yet</span>
+    <span class="asm-op">LD</span>   <span class="asm-reg">SP</span>,<span class="asm-num">0FFFFh</span>      <span class="asm-comment">; Set stack pointer to top of RAM (grows down)</span>
+    <span class="asm-op">LD</span>   <span class="asm-reg">B</span>,<span class="asm-num">0Ah</span>           <span class="asm-comment">; Delay count</span>
+    <span class="asm-op">CALL</span> <span class="asm-num">579h</span>            <span class="asm-comment">; delay() — wait for power to stabilise</span>
+    <span class="asm-op">CALL</span> <span class="asm-num">13Ch</span>            <span class="asm-comment">; devinit() — init serial ports</span>
+    <span class="asm-op">CALL</span> <span class="asm-num">6DAh</span>            <span class="asm-comment">; vidinit() — init video, clear screen</span>
+    <span class="asm-op">CALL</span> <span class="asm-num">244h</span>            <span class="asm-comment">; diskinit() — init floppy controller</span>
+    <span class="asm-op">JR</span>   <span class="asm-num">67h</span>             <span class="asm-comment">; jump forward to boot loader proper</span></code></pre>
+
+<div class="callout analogy">
+  <div class="callout-title">Arduino analogy</div>
+  This is exactly Arduino's <code>setup()</code>: disable interrupts, set up the stack, wait for power rails to settle, then call init functions for each peripheral in order.
+</div>
+
+<h3>Step 1: Power-on delay</h3>
+<p>The very first thing is a software delay. This gives capacitors time to charge and voltage rails to stabilise — common on old hardware where there's no power-good signal. The delay routine (<code>0x0579</code>) is a simple nested countdown loop: B×686×256 iterations of <code>DJNZ</code>.</p>
+
+<h3>Step 2: devinit — serial port setup</h3>
+<p>Initialises the Z80 SIO chip and the 8253 baud rate generator. See the <a href="#devinit">Device Init</a> section.</p>
+
+<h3>Step 3: vidinit — video setup</h3>
+<p>Configures the 6545 CRTC chip and clears the screen. See the <a href="#video">Video</a> section.</p>
+
+<h3>Step 4: diskinit — floppy controller setup</h3>
+<p>Resets the WD179x FDC. See the <a href="#disk">Disk I/O</a> section.</p>
+
+<h3>Step 5: Load the OS from disk</h3>
+<p>The loader displays the prompt, then reads from track 0 of drive A:</p>
+
+<pre><code><span class="asm-comment">; Boot loader — show prompt, try to load OS</span>
+    <span class="asm-op">CALL</span> <span class="asm-num">0A80h</span>          <span class="asm-comment">; print_string() — output null-terminated string that follows</span>
+    <span class="asm-op">DB</span>   <span class="asm-str">ESC,"=*?*     KAYPRO      *",ESC,"=-4"</span>
+    <span class="asm-op">DB</span>   <span class="asm-str">" Please place your diskette into Drive A",BS,0</span>
+<span class="asm-comment">; SETDMA(0xFA00) — load sectors to 0xFA00 (BIOS entry point)</span>
+    <span class="asm-op">LD</span>   <span class="asm-reg">BC</span>,<span class="asm-num">0FA00h</span>
+    <span class="asm-op">CALL</span> <span class="asm-num">285h</span>            <span class="asm-comment">; SETDMA</span>
+    <span class="asm-op">CALL</span> <span class="asm-num">2AAh</span>            <span class="asm-comment">; READ sector 0 track 0</span>
+    <span class="asm-op">DI</span>
+    <span class="asm-op">OR</span>   <span class="asm-reg">A</span>
+    <span class="asm-op">JR</span>   <span class="asm-reg">NZ</span>,<span class="asm-num">10Ah</span>        <span class="asm-comment">; if read failed → error "I cannot read your diskette"</span></code></pre>
+
+<h4>The boot sector format</h4>
+<p>Sector 0 of track 0 on a Kaypro CP/M disk has a specific structure (documented in <code>k10rom7a/ROM7A.MAC</code>):</p>
+
+<table>
+  <tr><th>Offset</th><th>Content</th><th>Notes</th></tr>
+  <tr><td class="mono">+0</td><td>Jump-over header code</td><td><code>JR $ (hang if executed raw)</code></td></tr>
+  <tr><td class="mono">+2</td><td>Load address (word)</td><td>Where in RAM to put the OS — typically 0xE400 (CCP start)</td></tr>
+  <tr><td class="mono">+4</td><td>BIOS entry address (word)</td><td>The address of the BIOS cold-start entry in the loaded image</td></tr>
+  <tr><td class="mono">+6</td><td>Length in 128-byte sectors (word)</td><td>How many more sectors to read</td></tr>
+</table>
+
+<p>The loader reads this header, then loops reading sectors from track 0 (and overflowing to higher tracks) until it has loaded the entire CCP+BDOS+BIOS image into RAM. Then it jumps to the BIOS cold-start entry to hand off control.</p>
+
+<h3>Step 6: Error handling</h3>
+<p>If any sector read fails, the loader prints:</p>
+<pre><code><span class="asm-str">"\r\n\n\a"</span>
+<span class="asm-str">"I cannot read your diskette."</span></code></pre>
+<p>Then it calls <code>diskoff</code>, and loops back to the prompt. The user must remove and replace the disk, or the machine loops forever.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="devinit">
+<h2>Device Init — Serial Ports (devinit, 0x013C)</h2>
+
+<p>The Kaypro 4 has three serial "channels":</p>
+<ul>
+  <li><strong>Channel A (console)</strong>: the keyboard (input) and video output path — but video goes through its own logic, keyboard is the UART side of channel A.</li>
+  <li><strong>Channel B (modem/serial)</strong>: the RS-232 port on the back of the machine.</li>
+  <li><strong>Parallel port</strong>: for the printer.</li>
+</ul>
+
+<h3>The Z80 SIO chip</h3>
+<p>The Z80 SIO (Serial I/O) is Zilog's own UART chip. It has two channels (A and B) each with data and command registers. You configure it by writing to "Write Registers" (WR0–WR7) and read status from "Read Registers" (RR0, RR1, RR2).</p>
+
+<div class="callout analogy">
+  <div class="callout-title">Arduino analogy</div>
+  Writing to the SIO is like calling <code>Serial.begin(9600)</code> in setup() — you're telling the hardware "I want 8N1, at this baud rate, receive ready interrupt off." But instead of a friendly API, you write raw bytes to I/O ports.
+</div>
+
+<h4>SIO port assignments (292 ROM)</h4>
+<table>
+  <tr><th>Port</th><th>Channel</th><th>Direction</th></tr>
+  <tr><td class="mono">0x00 (0)</td><td>SIO Channel A — Data</td><td>Read keyboard / write to channel A</td></tr>
+  <tr><td class="mono">0x01 (1)</td><td>SIO Channel B — Data</td><td>Read/write modem/serial port</td></tr>
+  <tr><td class="mono">0x02 (2)</td><td>SIO Channel A — Control</td><td>Write config commands, read status</td></tr>
+  <tr><td class="mono">0x03 (3)</td><td>SIO Channel B — Control</td><td>Write config commands, read status</td></tr>
+  <tr><td class="mono">0x04–0x07</td><td>8253 PIT (timer/baud rate gen)</td><td>Sets baud rate divisors</td></tr>
+</table>
+
+<h4>SIO initialisation sequence</h4>
+<p>The <code>devinit</code> routine (at 0x013C) sends a series of bytes to port 0x14 (the parallel port latch) and to the SIO control port to configure both channels. The raw bytes in the ROM are:</p>
+<pre><code><span class="asm-comment">; Parallel port / control latch setup</span>
+    <span class="asm-op">LD</span>   <span class="asm-reg">A</span>,<span class="asm-num">0DFh</span>
+    <span class="asm-op">OUT</span>  (<span class="asm-io">14h</span>),<span class="asm-reg">A</span>
+
+<span class="asm-comment">; SIO reset sequence — always start by writing WR0 = reset</span>
+    <span class="asm-op">LD</span>   <span class="asm-reg">C</span>,<span class="asm-num">7</span>             <span class="asm-comment">; channel to initialise (port offset)</span>
+    <span class="asm-op">CALL</span> <span class="asm-num">147h</span>            <span class="asm-comment">; write_sio_reg(C, config_table)</span>
+    <span class="asm-op">LD</span>   <span class="asm-reg">C</span>,<span class="asm-num">0Eh</span>
+    <span class="asm-op">LD</span>   <span class="asm-reg">HL</span>,<span class="asm-num">133h</span>         <span class="asm-comment">; pointer to init bytes table</span>
+    <span class="asm-op">LD</span>   <span class="asm-reg">B</span>,<span class="asm-num">9</span>             <span class="asm-comment">; 9 bytes to send</span>
+    <span class="asm-op">OTIR</span>                <span class="asm-comment">; output B bytes from (HL) to port C, B=0 when done</span></code></pre>
+
+<p><code>OTIR</code> is a Z80 block instruction: "Output bytes from memory to I/O port, incrementing HL, decrementing B until B=0." In Python: <code>for byte in config_table: port_write(C, byte)</code>.</p>
+
+<p>The init byte table at 0x133 contains the values for SIO Write Registers (WR0–WR4 for each channel), configuring 8 data bits, no parity, 1 stop bit — the classic "8N1" serial setup.</p>
+
+<h3>Baud rate</h3>
+<p>The 8253 Programmable Interval Timer runs as a baud rate clock. The ROM writes a divisor to the 8253 to set the baud rate. The Kaypro stores the current baud rate setting in scratch RAM (at <code>0xFD17h</code> in the 292 ROM), and the SIO can be reconfigured at runtime via escape sequences or the <code>TERMINAL</code> command on replacement ROMs.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="video">
+<h2>Video — vidinit and vidout</h2>
+
+<h3>The hardware</h3>
+<p>The Kaypro 4 screen is 80×24 characters (80 columns, 24 rows = 1920 character cells). The display hardware is:</p>
+<ul>
+  <li><strong>6545 CRTC</strong> (Cathode Ray Tube Controller) — a dedicated chip that generates the video timing signals and manages the video RAM address. You program it by writing pairs of (register number, value) to two I/O ports.</li>
+  <li><strong>Video RAM</strong> — a dedicated block of RAM that the CRTC reads to determine what character is at each position. On the Kaypro it's mapped into the CPU address space at a specific area (the 292 ROM stores its address in scratch var <code>0xFD7Ah</code>).</li>
+  <li><strong>Character ROM</strong> — a separate EPROM (81-146a, the 2KB one in your archive) that maps character codes to pixel bitmaps. The CRTC uses this to draw each character row-by-row during horizontal scan.</li>
+</ul>
+
+<h3>vidinit (0x06DA)</h3>
+<p>Sends the CRTC configuration registers to set up screen geometry and initialises the video RAM pointer in scratch RAM:</p>
+<pre><code><span class="asm-comment">; CRTC init table at 0x76D — 16 values for registers R0..R15</span>
+<span class="asm-label">crtc_init:</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">6Ah</span>  <span class="asm-comment">; R0:  horizontal total (106 chars)</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">50h</span>  <span class="asm-comment">; R1:  horizontal displayed (80 chars)</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">56h</span>  <span class="asm-comment">; R2:  horizontal sync position</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">99h</span>  <span class="asm-comment">; R3:  horizontal/vertical sync widths</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">19h</span>  <span class="asm-comment">; R4:  vertical total (25 rows)</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">0Ah</span>  <span class="asm-comment">; R5:  vertical adjust</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">19h</span>  <span class="asm-comment">; R6:  vertical displayed (24 rows + 1 status)</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">19h</span>  <span class="asm-comment">; R7:  vertical sync position</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">78h</span>  <span class="asm-comment">; R8:  interlace and delay</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">0Fh</span>  <span class="asm-comment">; R9:  max scan line (16 scan lines/char)</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">60h</span>  <span class="asm-comment">; R10: cursor start line + blink mode</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">0Fh</span>  <span class="asm-comment">; R11: cursor end line</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">00h</span>  <span class="asm-comment">; R12: start address high (video RAM at 0x0000 relative)</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">00h</span>  <span class="asm-comment">; R13: start address low</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">00h</span>  <span class="asm-comment">; R14: cursor address high</span>
+    <span class="asm-op">DB</span>   <span class="asm-num">00h</span>  <span class="asm-comment">; R15: cursor address low</span></code></pre>
+
+<p>The CRTC talks via ports <code>0x1C</code> (register select) and <code>0x1D</code> (data). Writing a register is always a two-step: first write the register number to 0x1C, then write the value to 0x1D.</p>
+
+<div class="callout analogy">
+  <div class="callout-title">Arduino analogy</div>
+  This is like configuring an SPI or I2C peripheral: write an address/register byte, then write the data byte. <code>Wire.write(reg); Wire.write(value);</code>
+</div>
+
+<h3>vidout (0x077D) — the character output routine</h3>
+<p>This is the most complex routine in the ROM. It receives a character in register C and decides what to do with it. There are three cases:</p>
+
+<ol>
+  <li><strong>Printable character (0x20–0x7F):</strong> Write it directly to the video RAM at the current cursor position, advance the cursor. If the cursor reaches the end of the line, wrap to the next line. If it's at the last row, scroll the screen up.</li>
+  <li><strong>Control character (0x00–0x1F):</strong> Handle as a special action — newline, carriage return, backspace, bell, etc.</li>
+  <li><strong>ESC sequences (0x1B followed by more bytes):</strong> A state machine. After seeing ESC, the next byte(s) select a command. Kaypro uses ADM-3A terminal codes plus some extensions.</li>
+</ol>
+
+<h4>ESC sequence state machine</h4>
+<p>The video state is stored in scratch RAM variable <code>0xFD74h</code>. When 0, normal operation. When non-zero, we're mid-sequence. The ROM implements a complete terminal emulator:</p>
+
+<table>
+  <tr><th>ESC sequence</th><th>Action</th></tr>
+  <tr><td class="mono">ESC = row col</td><td>Move cursor to position (row-32, col-32) — direct cursor positioning</td></tr>
+  <tr><td class="mono">ESC A</td><td>Cursor up</td></tr>
+  <tr><td class="mono">ESC B</td><td>Cursor down</td></tr>
+  <tr><td class="mono">ESC C</td><td>Cursor right</td></tr>
+  <tr><td class="mono">ESC D</td><td>Cursor left</td></tr>
+  <tr><td class="mono">ESC E</td><td>Erase screen, home cursor</td></tr>
+  <tr><td class="mono">ESC Y</td><td>Erase to end of line</td></tr>
+  <tr><td class="mono">ESC j</td><td>Reverse video on</td></tr>
+  <tr><td class="mono">ESC k</td><td>Reverse video off</td></tr>
+  <tr><td class="mono">ESC p</td><td>Enter graphics mode</td></tr>
+  <tr><td class="mono">ESC G 0–7</td><td>Set video attribute bits</td></tr>
+  <tr><td class="mono">ESC H 0–7</td><td>Clear video attribute bits</td></tr>
+</table>
+
+<h3>How video RAM works</h3>
+<p>The 6545 CRTC treats video RAM as a flat array of character codes. At 80 columns × 24 rows, that's 1920 bytes. The CRTC has a start address register (R12/R13) that tells it where in RAM the top-left of the screen starts. The ROM uses this to implement <strong>hardware scrolling</strong>: instead of copying 1920 bytes up one row (slow), it just increments the start address by 80 bytes, pointing the CRTC at the second row — effectively moving the "window" forward through a circular video RAM buffer. The buffer size is 2048 bytes (0x800), giving a small amount of "off-screen" wrap-around space.</p>
+
+<div class="callout analogy">
+  <div class="callout-title">Analogy</div>
+  Hardware scrolling via the CRTC start address is like changing where <code>array[0]</code> starts in a ring buffer — you don't move the data, you move the pointer. The visual result is instant scroll with zero CPU effort.
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="disk">
+<h2>Disk I/O</h2>
+
+<h3>The WD179x FDC</h3>
+<p>The Kaypro uses a Western Digital FD179x (also known as FD1793 or WD1793) Floppy Disk Controller chip. This chip handles all the low-level floppy stuff: head stepping, reading/writing magnetic flux reversals, CRC checking, sector ID detection. You don't interact with the disk at bit level — you tell the FDC "read sector N from track T on side S" and it does the physical work.</p>
+
+<div class="callout analogy">
+  <div class="callout-title">Analogy</div>
+  The FDC is like an SD card module with a simple command interface: you set up parameters, send a command, wait for the interrupt/status flag, then read the data. Much simpler than bit-banging SPI at the magnetic level yourself.
+</div>
+
+<h4>FDC port assignments</h4>
+<table>
+  <tr><th>Port</th><th>Register (read)</th><th>Register (write)</th></tr>
+  <tr><td class="mono">0x10</td><td>Status register</td><td>Command register</td></tr>
+  <tr><td class="mono">0x11</td><td>Track register</td><td>Track register</td></tr>
+  <tr><td class="mono">0x12</td><td>Sector register</td><td>Sector register</td></tr>
+  <tr><td class="mono">0x13</td><td>Data register</td><td>Data register</td></tr>
+  <tr><td class="mono">0x14</td><td>Control latch (read back)</td><td>Control latch — drive select, motor on, side select, density</td></tr>
+</table>
+
+<h4>diskinit (0x0244) — FDC reset</h4>
+<p>Sends a "Force Interrupt" command (0xD0) to the FDC to reset its state, then reconfigures the control latch. It also copies a small routine to scratch RAM at 0xFDE5 (the actual sector read/write inner loop — see the "relocate to FDE5H" comment in the source). This is done because the read loop runs during a DMA-like "read data byte by byte as they come off disk" phase that needs to be as fast as possible, and upper RAM is closer to no wait states.</p>
+
+<h4>HOME (0x0296) — seek to track 0</h4>
+<pre><code><span class="asm-comment">; Send RESTORE command to FDC — seeks head to track 0</span>
+    <span class="asm-op">LD</span>   <span class="asm-reg">A</span>,<span class="asm-num">0D0h</span>          <span class="asm-comment">; Force interrupt (abort any in-progress command)</span>
+    <span class="asm-op">OUT</span>  (<span class="asm-io">10h</span>),<span class="asm-reg">A</span>
+    <span class="asm-op">CALL</span> <span class="asm-num">563h</span>            <span class="asm-comment">; diskon() — motor on, select drive</span>
+    <span class="asm-op">LD</span>   <span class="asm-reg">A</span>,<span class="asm-num">0</span>
+    <span class="asm-op">OUT</span>  (<span class="asm-io">10h</span>),<span class="asm-reg">A</span>          <span class="asm-comment">; Command 0x00 = RESTORE (step in until track 0)</span></code></pre>
+
+<h4>SELDSK (0x0272) — select disk drive</h4>
+<p>Called with C = drive number (0=A, 1=B). Must return HL pointing to the Disk Parameter Header (DPH) for this drive, or HL=0 if the drive number is invalid.</p>
+<pre><code><span class="asm-label">SELDSK:</span>
+    <span class="asm-op">LD</span>   <span class="asm-reg">A</span>,<span class="asm-reg">C</span>
+    <span class="asm-op">LD</span>   (<span class="asm-num">0FB00h</span>),<span class="asm-reg">A</span>    <span class="asm-comment">; save disk number to scratch RAM</span>
+    <span class="asm-op">JP</span>   <span class="asm-num">3DBh</span>           <span class="asm-comment">; → compute DPH address and return in HL</span></code></pre>
+
+<h4>SETTRK / SETSEC / SETDMA</h4>
+<p>These three routines just store their argument into scratch RAM variables. Nothing happens to hardware yet — they're just "loading parameters for the next READ or WRITE."</p>
+
+<pre><code><span class="asm-label">SETTRK:</span>  <span class="asm-op">LD</span> <span class="asm-reg">A</span>,<span class="asm-reg">C</span>  <span class="asm-op">LD</span> (<span class="asm-num">0FB03h</span>),<span class="asm-reg">A</span>  <span class="asm-op">RET</span>   <span class="asm-comment">; save track to 0xFB03</span>
+<span class="asm-label">SETSEC:</span>  <span class="asm-op">LD</span> <span class="asm-reg">A</span>,<span class="asm-reg">C</span>  <span class="asm-op">LD</span> (<span class="asm-num">0FB00h</span>),<span class="asm-reg">A</span>  <span class="asm-op">RET</span>   <span class="asm-comment">; save sector to 0xFB00</span>
+<span class="asm-label">SETDMA:</span>  <span class="asm-op">LD</span> (<span class="asm-num">0FB14h</span>),<span class="asm-reg">BC</span>  <span class="asm-op">RET</span>           <span class="asm-comment">; save DMA address (BC) to 0xFB14</span></code></pre>
+
+<h4>READ (0x02AA) — the actual disk read</h4>
+<p>READ is the most complex disk routine. It:</p>
+<ol>
+  <li>Checks if we need to step the head to a new track (if different from the currently seeked track, issues a SEEK command to the FDC)</li>
+  <li>Handles side selection (double-sided disks: track 0–39 on side 0, track 40–79 on side 1)</li>
+  <li>Sends the READ SECTOR command to the FDC (command byte <code>0x88</code>)</li>
+  <li>Reads 128 bytes from the FDC data port (0x13) one byte at a time, using <code>INI</code> / <code>HALT</code></li>
+  <li>Returns 0x00 in A on success, non-zero on error</li>
+</ol>
+
+<h4>The HALT trick — waiting for byte-ready</h4>
+<p>The inner read loop in the 292 ROM uses <code>HALT</code> to wait for each byte:</p>
+<pre><code><span class="asm-op">LD</span>   <span class="asm-reg">A</span>,<span class="asm-num">88h</span>           <span class="asm-comment">; READ SECTOR command</span>
+<span class="asm-op">OUT</span>  (<span class="asm-io">10h</span>),<span class="asm-reg">A</span>
+<span class="asm-label">rd_loop:</span>
+<span class="asm-op">HALT</span>                <span class="asm-comment">; CPU halts here until /INT is asserted</span>
+<span class="asm-op">INI</span>                 <span class="asm-comment">; Read byte from port (HL) to RAM at (DE), decrement BC</span>
+<span class="asm-op">JR</span>   <span class="asm-reg">NZ</span>,rd_loop     <span class="asm-comment">; Loop until BC=0 (128 bytes read)</span></code></pre>
+
+<div class="callout analogy">
+  <div class="callout-title">What HALT is doing here</div>
+  The FDC asserts <code>/INT</code> (interrupt line) when each byte is ready to be read. With <code>DI</code> (interrupts disabled), <code>HALT</code> makes the CPU pause execution until <code>/INT</code> is asserted — then resumes at the next instruction (not an ISR, because interrupts are disabled). It's essentially a hardware-assisted busy-wait: "pause until the FDC says it has a byte." This is faster and more reliable than polling the status register in a loop.
+</div>
+
+<h4>WRITE (0x02C5)</h4>
+<p>Mirror of READ: seek if needed, send WRITE SECTOR command (0xA8), then use <code>HALT</code> + <code>OUTI</code> to send 128 bytes to the FDC data port one byte at a time.</p>
+
+<h4>Retry logic</h4>
+<p>Both READ and WRITE have retry logic. The outer loop (in the routines around 0x0590) retries up to 16 times. On retry, the ROM performs a HOME (seek to track 0) and tries again — a common recovery strategy for floppy errors caused by head misalignment. If all retries fail, returns error code 0xFF.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="dpt">
+<h2>Disk Parameter Tables</h2>
+
+<p>CP/M's BDOS doesn't know the physical geometry of the disk. It sees abstract "tracks" and "sectors." The BIOS provides a set of data tables that describe the disk geometry to BDOS. These are the Disk Parameter Block (DPB) and Disk Parameter Header (DPH).</p>
+
+<div class="callout analogy">
+  <div class="callout-title">Analogy</div>
+  Like a filesystem superblock: the DPB tells BDOS "this disk has 77 tracks, 26 sectors/track, sectors are 128 bytes, there are 64 directory entries, 2 reserved tracks for the OS..." BDOS can then allocate blocks and find files generically.
+</div>
+
+<h3>Disk Parameter Block (DPB)</h3>
+<table>
+  <tr><th>Field</th><th>Value (drive A, 292)</th><th>Meaning</th></tr>
+  <tr><td><code>SPT</code></td><td>18 (0x12)</td><td>Sectors per track (physical)</td></tr>
+  <tr><td><code>BSH</code></td><td>3</td><td>Block shift factor (8 × 128 bytes = 1KB allocation block)</td></tr>
+  <tr><td><code>BLM</code></td><td>7</td><td>Block mask (2^BSH - 1)</td></tr>
+  <tr><td><code>EXM</code></td><td>0</td><td>Extent mask</td></tr>
+  <tr><td><code>DSM</code></td><td>82 (0x52)</td><td>Total disk blocks - 1</td></tr>
+  <tr><td><code>DRM</code></td><td>31 (0x1F)</td><td>Directory entries - 1 (32 entries)</td></tr>
+  <tr><td><code>AL0/AL1</code></td><td>0x80, 0x00</td><td>Directory allocation bitmap (first block reserved)</td></tr>
+  <tr><td><code>CKS</code></td><td>8</td><td>Checksum size (directory changed detection)</td></tr>
+  <tr><td><code>OFF</code></td><td>3</td><td>Tracks to skip (reserved for OS = track 0 boot + 2 more)</td></tr>
+</table>
+
+<p>The 292 ROM has tables for two drive geometries. The second DPB (for drive B or double-sided) has different parameters: 40 sectors/track, 194 DSM, 63 DRM, OFF=1.</p>
+
+<h3>Sector skew / SECTRAN (0x0536)</h3>
+<p>Physical sectors on a floppy aren't read in order 1, 2, 3, 4... Instead, they're interleaved. The Kaypro uses a skew of 2 — sector 1 physically follows sector 4, etc. This is because the head moves faster than the disk can deliver data: if you read sector 1, then immediately seek to sector 2, the disk has already rotated past sector 2 and you have to wait a full revolution. By skewing, you put logically sequential sectors physically far apart, so you have time to seek between them. The SECTRAN routine maps a logical sector number to a physical one using a lookup table embedded in the ROM.</p>
+
+<p>The skew table for the 292 ROM (logical → physical):</p>
+<pre><code><span class="asm-comment">; Drive A skew table (18 sectors, interleave 2)</span>
+<span class="asm-op">DB</span> <span class="asm-num">1,6,11,16,3,8,13,18,5,10,15,2,7,12,17,4,9,14</span></code></pre>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="keyboard">
+<h2>Keyboard</h2>
+
+<p>On the Kaypro, the keyboard is connected to SIO Channel A (the same SIO chip as the serial port, but channel A). The 8048 microcontroller inside the keyboard scans the key matrix and sends serial bytes down the line to the Z80 SIO. The keyboard controller sends raw keycodes, not ASCII — the ROM translates them.</p>
+
+<h4>kbdstat (0x014F) — is a key pressed?</h4>
+<pre><code><span class="asm-label">kbdstat:</span>
+    <span class="asm-op">IN</span>   <span class="asm-reg">A</span>,(<span class="asm-io">7</span>)            <span class="asm-comment">; Read SIO channel A status (port 7 = RR0 channel A)</span>
+    <span class="asm-op">AND</span>  <span class="asm-num">1</span>               <span class="asm-comment">; Check bit 0 = Rx Character Available</span>
+    <span class="asm-op">LD</span>   <span class="asm-reg">A</span>,<span class="asm-num">0</span>             <span class="asm-comment">; A = 0 (no key)</span>
+    <span class="asm-op">RET</span>  <span class="asm-reg">Z</span>              <span class="asm-comment">; return 0 if no key waiting</span>
+    <span class="asm-op">LD</span>   <span class="asm-reg">A</span>,<span class="asm-num">0FFh</span>          <span class="asm-comment">; A = 0xFF (key ready) — CP/M CONST convention</span>
+    <span class="asm-op">RET</span></code></pre>
+
+<h4>kbdin (0x0159) — read a key</h4>
+<pre><code><span class="asm-label">kbdin:</span>
+    <span class="asm-op">CALL</span> <span class="asm-num">14Fh</span>            <span class="asm-comment">; kbdstat() — wait for key</span>
+    <span class="asm-op">JR</span>   <span class="asm-reg">Z</span>,<span class="asm-num">159h</span>          <span class="asm-comment">; loop if no key yet</span>
+    <span class="asm-op">IN</span>   <span class="asm-reg">A</span>,(<span class="asm-io">5</span>)            <span class="asm-comment">; Read byte from SIO channel A data (port 5)</span>
+    <span class="asm-op">CALL</span> <span class="asm-num">16Eh</span>            <span class="asm-comment">; translate() — decode keycode to ASCII</span>
+    <span class="asm-op">RET</span></code></pre>
+
+<h4>Key translation</h4>
+<p>The translate routine at 0x16E searches a lookup table embedded in the ROM (at 0x183). It receives a raw keycode from the keyboard controller, searches the table for it, and returns the corresponding ASCII character. The table has two parts:</p>
+<ul>
+  <li><code>DB 0xF1, 0xF2, 0xF3...</code> — raw keycodes for the function/special keys</li>
+  <li><code>DB 0x80, 0x81, 0x82...</code> — corresponding translated values (extended ASCII or control chars)</li>
+</ul>
+<p>Normal alphanumeric keys come through directly as ASCII from the keyboard 8048 controller (the 8048 does the basic scan-to-ASCII mapping).</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="scratchram">
+<h2>Scratch RAM — the ROM's Global Variables</h2>
+
+<p>The ROM has no BSS segment or heap — it's in a ROM. All state that persists between calls is stored in fixed RAM locations at the top of the address space. The CP/M BIOS that loads from disk uses a similar scratch area.</p>
+
+<p>Key scratch RAM locations in the 292 ROM:</p>
+
+<table>
+  <tr><th>Address</th><th>Variable</th><th>Purpose</th></tr>
+  <tr><td class="mono">0xFB00</td><td>disk/sector</td><td>Current sector number for disk I/O</td></tr>
+  <tr><td class="mono">0xFB01–0xFB02</td><td>DMA address</td><td>Where to put data on disk read</td></tr>
+  <tr><td class="mono">0xFB03</td><td>track</td><td>Current track number</td></tr>
+  <tr><td class="mono">0xFB04</td><td>last disk</td><td>Last selected drive (for "did the disk change?" detection)</td></tr>
+  <tr><td class="mono">0xFB05–0xFB06</td><td>last DMA</td><td>Last DMA address (deblocking cache)</td></tr>
+  <tr><td class="mono">0xFB07</td><td>last sector (physical)</td><td>For deblocking: which physical sector is buffered</td></tr>
+  <tr><td class="mono">0xFB08–0xFB0F</td><td>deblocking state</td><td>Track, sector, side state for multi-128-byte physical sector handling</td></tr>
+  <tr><td class="mono">0xFB14–0xFB15</td><td>DMA pointer</td><td>Current write position into DMA buffer</td></tr>
+  <tr><td class="mono">0xFB16+</td><td>sector buffer</td><td>128-byte data buffer for disk reads/writes</td></tr>
+  <tr><td class="mono">0xFD16</td><td>current drive</td><td>Which drive is currently active</td></tr>
+  <tr><td class="mono">0xFD17–0xFD1F</td><td>baud rate/SIO config</td><td>Current baud rate bytes for SIO channel A and B</td></tr>
+  <tr><td class="mono">0xFD18</td><td>disk type / mode flags</td><td>0 = normal, 0x20 = double-sided mode</td></tr>
+  <tr><td class="mono">0xFD74</td><td>ESC state</td><td>Video escape sequence parser state</td></tr>
+  <tr><td class="mono">0xFD75</td><td>cursor row</td><td>Current screen row (0–23)</td></tr>
+  <tr><td class="mono">0xFD76</td><td>cursor col</td><td>Current screen column (0–79)</td></tr>
+  <tr><td class="mono">0xFD77</td><td>video attribute flags</td><td>Reverse video, underline, blink, etc.</td></tr>
+  <tr><td class="mono">0xFD78–0xFD79</td><td>video RAM cursor ptr</td><td>Address of current character cell in video RAM</td></tr>
+  <tr><td class="mono">0xFD7A–0xFD7B</td><td>video RAM base</td><td>Base address of the video RAM (start of screen buffer)</td></tr>
+  <tr><td class="mono">0xFD8C</td><td>alternate charset flag</td><td>Controls Greek/extended character set switching</td></tr>
+  <tr><td class="mono">0xFDE5+</td><td>relocated sector read loop</td><td>Inner disk read/write routine, copied here for speed</td></tr>
+</table>
+
+<div class="callout warning">
+  <div class="callout-title">Important</div>
+  These addresses are for the ROM (boot-time) scratch area. Once CP/M loads its BIOS from disk into RAM, that BIOS has its <em>own</em> scratch area at the top of RAM, and the ROM scratch variables are overwritten. The ROM only uses these during the initial boot and while disk routines are being called from the ROM (before CP/M takes over).
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="292diff">
+<h2>292-A vs K10 (v7A) — What's Different</h2>
+
+<p>Your Kaypro 4 has an <strong>81-292-A</strong> ROM. The best-documented Kaypro ROM source in the archive is the <strong>Kaypro 10 v7A</strong> (<code>k10rom7a/</code>) with developer comments. Here's what's different:</p>
+
+<h3>1. Hard disk support</h3>
+<div class="callout diff">
+  <div class="callout-title">292-A: No hard disk</div>
+  The K10 ROM has an entire module (<code>HDIO7A.MAC</code>, 16 KB) for Winchester hard disk support — the Kaypro 10 had a 10 MB hard drive. The 292/292-A only supports two floppy drives. The disk init, read, write, and parameter tables are floppy-only. If you look at the K10 source, you'll see a <code>dsktyp</code> variable (in <code>RAM.MAC</code>) that switches between floppy and hard disk code paths. The 292 ROM has no such switch.
+</div>
+
+<h3>2. Drive B overlay mechanism</h3>
+<div class="callout diff">
+  <div class="callout-title">K10 only: loads an overlay from drive B</div>
+  The K10 boot ROM loads a 2KB overlay from track 0 sectors 0–15 of drive B into RAM at 0xEE00 after booting. This overlay patches the BIOS (adds printer support, etc.) and is specific to the K10 configuration. The 292 ROM doesn't do this — it loads everything it needs from drive A sector 0 directly.
+</div>
+
+<h3>3. CRTC timing values</h3>
+<div class="callout diff">
+  <div class="callout-title">292-A: Different CRTC init</div>
+  The 292 ROM's CRTC init table (at 0x76D) has slightly different values from the K10. The K10 CRTC init uses <code>0x78, 0x50, 0x58, 0x0A, 0x1F, 0x06, 0x19, 0x1C, 0xC8, 0x07, 0x60, 0x07</code>. The 292 uses <code>0x6A, 0x50, 0x56, 0x99, 0x19, 0x0A, 0x19, 0x19, 0x78, 0x0F, 0x60, 0x0F</code>. R9 (max scan line) is 0x07 on K10 (8 scan lines/char) vs 0x0F on 292 (16 scan lines/char), reflecting different display hardware in the two models.
+</div>
+
+<h3>4. I/O port addresses</h3>
+<div class="callout diff">
+  <div class="callout-title">292-A vs K10: different port layout</div>
+  <p>The K10 uses a different I/O port map because it has more hardware (hard disk controller, extra serial ports). Key differences:</p>
+  <table>
+    <tr><th>Function</th><th>292-A port</th><th>K10 port</th></tr>
+    <tr><td>SIO A data</td><td class="mono">0x00</td><td class="mono">0x00</td></tr>
+    <tr><td>SIO A control</td><td class="mono">0x02</td><td class="mono">0x02</td></tr>
+    <tr><td>SIO B data</td><td class="mono">0x01</td><td class="mono">0x01</td></tr>
+    <tr><td>SIO B control</td><td class="mono">0x03</td><td class="mono">0x03</td></tr>
+    <tr><td>FDC command/status</td><td class="mono">0x10</td><td class="mono">0x10</td></tr>
+    <tr><td>FDC track</td><td class="mono">0x11</td><td class="mono">0x11</td></tr>
+    <tr><td>FDC sector</td><td class="mono">0x12</td><td class="mono">0x12</td></tr>
+    <tr><td>FDC data</td><td class="mono">0x13</td><td class="mono">0x13</td></tr>
+    <tr><td>FDC control latch</td><td class="mono">0x14</td><td class="mono">0x14</td></tr>
+    <tr><td>CRTC address</td><td class="mono">0x1C</td><td class="mono">0x1C</td></tr>
+    <tr><td>CRTC data</td><td class="mono">0x1D</td><td class="mono">0x1D</td></tr>
+    <tr><td>CRTC status/lightpen</td><td class="mono">0x1F</td><td class="mono">0x1F</td></tr>
+  </table>
+  <p>These are actually the same! The core I/O map is identical between 292 and K10. The K10 adds more ports for the hard disk (0x40–0x5F) that just aren't present on the 292 board.</p>
+</div>
+
+<h3>5. Disk parameter tables</h3>
+<div class="callout diff">
+  <div class="callout-title">292-A: Single-sided and double-sided 5.25" floppies only</div>
+  The 292 ROM has two DPBs: one for single-sided (1S/2D) and one for double-sided drives. The K10 has three DPBs: single-sided 5.25", double-sided 5.25", and 8" floppy. If you're using a double-sided drive on your Kaypro 4, the ROM detects it by trying to read from side 1 and sets flag 0xFD18=0x20 for double-sided mode.
+</div>
+
+<h3>6. Source quality</h3>
+<div class="callout diff">
+  <div class="callout-title">Note on the available 292 source</div>
+  The file <code>kp81_292.mac</code> is a <strong>reverse-engineered disassembly</strong> from 2006, not original source. It has no symbolic labels for most jump targets — they all appear as raw hex addresses (e.g. <code>JP 272H</code> instead of <code>JP seldsk</code>). The K10 source (<code>k10rom7a/</code>) is the <em>actual developer source</em> with comments, and is the best reference for understanding intent. The two ROMs are structurally very similar — the same engineer(s) wrote them — so the K10 comments generally apply to the 292 too.
+</div>
+
+<h3>7. The 292-A suffix</h3>
+<div class="callout diff">
+  <div class="callout-title">A vs non-A</div>
+  The disassembly in the archive is of the <strong>81-292</strong> (no letter suffix). The <strong>81-292-A</strong> (your ROM) is a minor revision. Based on the version matrix, both are CP/M 2.2F, so the changes are likely small bugfixes. Without a dump of the 81-292-A specifically, we can't say exactly what changed. The <code>KP-CBOOT.DOC</code> file in the archive documents specific memory addresses in "the K10 CP/M 2.2F ROM" which should be applicable to the 292-A as well.
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="iomap">
+<h2>Full I/O Port Map (Kaypro 4 / 292-A)</h2>
+
+<table>
+  <tr><th>Port(s)</th><th>Chip</th><th>Function</th></tr>
+  <tr><td class="mono">0x00</td><td>Z80 SIO</td><td>Channel A data — keyboard input, console output to SIO-A</td></tr>
+  <tr><td class="mono">0x01</td><td>Z80 SIO</td><td>Channel B data — RS-232 serial port (modem)</td></tr>
+  <tr><td class="mono">0x02</td><td>Z80 SIO</td><td>Channel A control — write WR0-WR7, read RR0-RR2</td></tr>
+  <tr><td class="mono">0x03</td><td>Z80 SIO</td><td>Channel B control</td></tr>
+  <tr><td class="mono">0x04</td><td>8253 PIT</td><td>Counter 0 (baud rate generator for SIO-A)</td></tr>
+  <tr><td class="mono">0x05</td><td>8253 PIT</td><td>Counter 1 (baud rate generator for SIO-B)</td></tr>
+  <tr><td class="mono">0x06</td><td>8253 PIT</td><td>Counter 2</td></tr>
+  <tr><td class="mono">0x07</td><td>8253 PIT</td><td>Control word</td></tr>
+  <tr><td class="mono">0x08–0x0B</td><td>Z80 SIO (alt)</td><td>Secondary SIO channels (if present)</td></tr>
+  <tr><td class="mono">0x10</td><td>WD179x FDC</td><td>Status (read) / Command (write)</td></tr>
+  <tr><td class="mono">0x11</td><td>WD179x FDC</td><td>Track register</td></tr>
+  <tr><td class="mono">0x12</td><td>WD179x FDC</td><td>Sector register</td></tr>
+  <tr><td class="mono">0x13</td><td>WD179x FDC</td><td>Data register</td></tr>
+  <tr><td class="mono">0x14</td><td>74LS174 latch</td><td>Control latch: bits = drive select (A/B), motor on, side select, density, ROM bank</td></tr>
+  <tr><td class="mono">0x18</td><td>Parallel port</td><td>Printer data output</td></tr>
+  <tr><td class="mono">0x1C</td><td>6545 CRTC</td><td>Address register (select which internal register to access)</td></tr>
+  <tr><td class="mono">0x1D</td><td>6545 CRTC</td><td>Data register (read/write selected CRTC register)</td></tr>
+  <tr><td class="mono">0x1F</td><td>6545 CRTC</td><td>Light pen / cursor register (read address, write cursor update)</td></tr>
+</table>
+
+<h3>Control latch (port 0x14) bit map</h3>
+<table>
+  <tr><th>Bit</th><th>Value</th><th>Function</th></tr>
+  <tr><td>0</td><td>0x01</td><td>Drive select: 0=drive A, 1=drive B</td></tr>
+  <tr><td>1</td><td>0x02</td><td>Side select: 0=side 0, 1=side 1 (double-sided)</td></tr>
+  <tr><td>2</td><td>0x04</td><td>Motor on (1=on)</td></tr>
+  <tr><td>3</td><td>0x08</td><td>Double density: 0=single density (FM), 1=double density (MFM)</td></tr>
+  <tr><td>4</td><td>0x10</td><td>Motor on delay flag (internal ROM state)</td></tr>
+  <tr><td>5</td><td>0x20</td><td>Printer strobe</td></tr>
+  <tr><td>6</td><td>0x40</td><td>ROM bank switch: writing 0 maps ROM at 0x0000; writing 1 maps RAM</td></tr>
+  <tr><td>7</td><td>0x80</td><td>DMA/bus control (used during sector transfers)</td></tr>
+</table>
+
+<div class="callout">
+  <div class="callout-title">Note on the ROM bank switch</div>
+  Bit 6 of the control latch is how the ROM switches itself out after loading CP/M. Once CP/M's BIOS cold-start routine runs, it writes to port 0x14 with bit 6 set, which causes the hardware to map RAM instead of ROM at 0x0000. After this point the CPU can never see the ROM again until the next power cycle or reset.
+</div>
+
+</section>
+
+</div><!-- #content -->
+
+<script>
+// Smooth scroll for sidebar links
+document.querySelectorAll('#sidebar a').forEach(a => {
+  a.addEventListener('click', e => {
+    const href = a.getAttribute('href');
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const el = document.querySelector(href);
+      if (el) el.scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+  });
+});
+
+// Highlight active section in sidebar
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('#sidebar a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(l => l.style.color = '');
+      const link = document.querySelector(`#sidebar a[href="#${entry.target.id}"]`);
+      if (link) link.style.color = 'var(--accent)';
+    }
+  });
+}, {rootMargin: '-10% 0px -70% 0px'});
+sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

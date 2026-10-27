@@ -22,19 +22,19 @@ A single Pico connected by ribbon cables to four interposer points:
 
 Horizon: a dedicated Pico carrier PCB to replace the ribbon-cable spread.
 
-## Framing B: CPU-socket daughter board (from `kaypro_stuff` / vault)
+## Framing B: CPU-socket daughter board ([design-notes.md](pico-board/design-notes.md))
 One board in the Z80 socket (Z80 re-seated on top), RP2040 on the full bus, three subsystems:
 1. **Boot manager:** bank-switched ROM images in larger flash (27C512 = 8 slots,
    SST39SF040 = 64). Slot 0 is a custom menu ROM. The Pico switches bank and pulses /RESET.
    /WAIT hides flash timing. Candidates (all in the archive): stock 81-478c, KayPLUS 84/83,
    PRO-884 MAX, Super MAX 2.7, TurboROM 3.4.
 2. **RAM disk:** battery-backed 512 KB SRAM (e.g. AS6C4008) as CP/M drive(s), with a
-   BIOS driver ([C BIOS](bios-c.md)). Prior art: Advent, Micro Sphere, KRAMDISK (`ramdisk.md`).
+   BIOS driver ([C BIOS](bios-c.md)). Prior art: Advent, Micro Sphere, KRAMDISK ([ramdisk.md](pico-board/ramdisk.md)). An `84KP256A.DOC` (256 KB RAM expansion for '84 boards) is in the archive.
 3. **System monitor:** /M1 snooping for trace and breakpoints, /BUSRQ to inspect and modify
    memory, USB CDC console.
 
 Decision recorded there: CPU-socket form factor rather than the expansion edge connector
-(all signals in one place, no trace cuts). Design notes: `pico-board/design-notes.md` in `kaypro_stuff`.
+(all signals in one place, no trace cuts). Full design: [design-notes.md](pico-board/design-notes.md) (bus signals, GPIO allocation, subsystem designs). RAM disk background: [ramdisk.md](pico-board/ramdisk.md).
 
 ## Useful facts
 - U29 refreshes DRAM itself (Z80 /RFSH unused), so **long /BUSRQ holds are safe**.

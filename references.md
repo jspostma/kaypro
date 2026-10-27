@@ -4,7 +4,7 @@
 - Kaypro10Video (Pico char-ROM/CRTC capture → HDMI): <https://github.com/jasperhax0r/Kaypro10Video>
 - Virtual Kaypro emulator (Doug Miller): <http://sims.durgadas.com/kaypro/kaypro.html>
 - kaytil (Kaypro II game-focused CP/M emulator, Pico port): <https://github.com/kobolt/kaytil>
-- Local: `kaypro_stuff` repo and the archive trees (see [README](README.md#where-things-live-read-this-first))
+- Local archive trees: see [archive index](archive/README.md)
 
 ## Video capture on other machines (same PIO technique)
 - EBD_IPKVM (Lisa through SE/30, Pico capture plus ADB): <https://github.com/h4rm0n1c/EBD_IPKVM>

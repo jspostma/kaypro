@@ -1,6 +1,6 @@
 # Tech manual master
 
-Status: **active, stalled**. Detail in `kaypro_stuff`: `projects/tech-manual-master/notes.md`.
+Status: **active, stalled**. Detail: [notes.md](tech-manual/notes.md). Marker output for 1484-C: [`tech-manual/marker-output/`](tech-manual/marker-output/).
 
 Goal: one clean, bookmarked, OCR'd master of the Kaypro Technical Manual from revisions
 1484-C (Aug 84), D (Dec 84), E (Jun 85) and F (Sep 85), plus a diffable text form to find
